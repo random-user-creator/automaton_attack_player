@@ -1,0 +1,10 @@
+Pillow>=11.0
+numpy>=1.26,<3
+opencv-python-headless>=4.10,<6
+dxcam>=0.3,<0.4
+mss>=10.2,<12
+rapidocr>=3.9,<4
+onnxruntime>=1.21,<1.27
+paddleocr>=3.3,<4
+easyocr>=1.7,<2
+pytesseract>=0.3.13,<0.4
