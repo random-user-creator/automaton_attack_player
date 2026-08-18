@@ -8,6 +8,7 @@ import time
 from PIL import Image
 
 from ..logging import timing_log
+from ..paths import bundled_model_dir
 from ..queueing import put_latest
 from .crops import compact_detection_mask, recognition_crops, unpack_detection_bounds
 from .results import (
@@ -153,14 +154,24 @@ def ocr_process_main(
                     "PaddleOCR GPU requested, but PaddlePaddle has no CUDA "
                     "support. Run scripts/setup_paddleocr.ps1."
                 )
-            detector = TextDetection(
-                model_name=paddle_settings["detector"],
-                device=paddle_device,
-            )
-            recognizer = TextRecognition(
-                model_name=paddle_settings["recognizer"],
-                device=paddle_device,
-            )
+            detector_name = paddle_settings["detector"]
+            recognizer_name = paddle_settings["recognizer"]
+            detector_dir = bundled_model_dir(detector_name)
+            recognizer_dir = bundled_model_dir(recognizer_name)
+            detector_kwargs = {
+                "model_name": detector_name,
+                "device": paddle_device,
+            }
+            recognizer_kwargs = {
+                "model_name": recognizer_name,
+                "device": paddle_device,
+            }
+            if detector_dir is not None:
+                detector_kwargs["model_dir"] = str(detector_dir)
+            if recognizer_dir is not None:
+                recognizer_kwargs["model_dir"] = str(recognizer_dir)
+            detector = TextDetection(**detector_kwargs)
+            recognizer = TextRecognition(**recognizer_kwargs)
             ocr = (detector, recognizer)
             device = f"PaddlePaddle {paddle_device} ({paddle_profile})"
         elif backend in {"easyocr", "easyocr_gpu"}:

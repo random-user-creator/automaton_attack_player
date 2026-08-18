@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+.packaging-venv/
 app_state.json
 *.egg-info/
 build/

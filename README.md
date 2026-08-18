@@ -1,6 +1,6 @@
-# Dota Word Game
+# Automaton Attack Player
 
-Dota Word Game is a low-latency Windows screen-capture, OCR, and auto-typing
+Automaton Attack Player is a low-latency Windows screen-capture, OCR, and auto-typing
 tool. The user selects a region of a game window, the app isolates the green
 word pixels, groups likely word regions, recognizes the original full-quality
 crops, and types the detected letters into the selected game window.
@@ -9,6 +9,20 @@ The application is intentionally tunable. Detection can run on a very small
 frame for speed while recognition still uses an unfiltered crop from the
 original capture. RapidOCR, PaddleOCR, EasyOCR, and Tesseract can be compared
 from the same UI.
+
+## Download the Windows app
+
+For the simplest setup, download `AutomatonAttackPlayer.exe` from the
+[latest GitHub Release](https://github.com/random-user-creator/automaton_attack_player/releases/latest)
+and double-click it. No Python installation is required.
+
+The portable EXE is an offline CPU edition: it includes PaddlePaddle,
+PaddleOCR, and the fast PP-OCRv4 mobile detection and recognition models. It
+does not download models on first launch. Settings and the selected capture
+area are saved in
+`%LOCALAPPDATA%\AutomatonAttackPlayer\app_state.json`. Windows SmartScreen may
+warn that the executable is from an unknown publisher because the project does
+not currently have a commercial code-signing certificate.
 
 ## Platform and requirements
 
@@ -59,6 +73,20 @@ PowerShell -ExecutionPolicy Bypass -File .\scripts\setup_paddleocr_cpu.ps1
 6. Verifies the base capture, image-processing, EasyOCR, and RapidOCR imports.
 
 The virtual environment and local `app_state.json` are excluded by `.gitignore`.
+
+## Building the Windows EXE
+
+Release builds use a separate CPU-only environment so optional CUDA OCR
+runtimes are not accidentally included. From PowerShell:
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1
+```
+
+The script creates `.packaging-venv`, downloads the two release models if
+needed, and writes the one-file application to
+`dist\AutomatonAttackPlayer.exe`. The build is intentionally limited to
+PaddleOCR CPU; running from source retains the full backend selector.
 
 ### Manual setup
 

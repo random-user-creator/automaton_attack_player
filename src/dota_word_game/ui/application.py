@@ -21,10 +21,13 @@ from ..platform.windows import (
 from ..vision.processing import GreenFilter, normalize_resize_method
 from ..workers.coordinator import PipelineCoordinator
 from .constants import (
+    OCR_BACKEND_LABELS,
+    OCR_LABEL_BACKENDS,
     REC_RESIZE_LABEL_METHODS,
     REC_RESIZE_METHOD_LABELS,
     RESIZE_LABEL_METHODS,
     RESIZE_METHOD_LABELS,
+    available_ocr_backends,
 )
 from .layout import UILayoutMixin
 
@@ -34,7 +37,7 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         self.state_path = STATE_PATH
         saved = self._load_state()
         super().__init__()
-        self.title("Dota Word Game")
+        self.title("Automaton Attack Player")
         self.last_normal_geometry = str(saved.get("window_geometry", "960x700"))
         try:
             self.geometry(self.last_normal_geometry)
@@ -78,22 +81,12 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         self.skip_ocr_detector_value = bool(
             saved.get("skip_ocr_detector", True)
         )
+        self.ocr_backend_options = available_ocr_backends()
         saved_backend = str(saved.get("ocr_backend", "paddle_cpu"))
         self.ocr_backend_value = (
             saved_backend
-            if saved_backend
-            in {
-                "rapidocr",
-                "rapidocr_gpu",
-                "paddle_cpu",
-                "paddle",
-                "paddle_server_cpu",
-                "paddle_server_gpu",
-                "easyocr",
-                "easyocr_gpu",
-                "tesseract",
-            }
-            else "paddle_cpu"
+            if saved_backend in self.ocr_backend_options
+            else self.ocr_backend_options[0]
         )
         self.keystroke_delay_ms = max(
             0.0, min(1000.0, float(saved.get("keystroke_delay_ms", 0.1)))
@@ -144,17 +137,7 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
             value=self.skip_ocr_detector_value
         )
         self.ocr_backend_var = tk.StringVar(
-            value={
-                "rapidocr": "RapidOCR CPU",
-                "rapidocr_gpu": "RapidOCR GPU (CUDA)",
-                "paddle_cpu": "PaddleOCR CPU",
-                "paddle": "PaddleOCR GPU",
-                "paddle_server_cpu": "PaddleOCR Server CPU",
-                "paddle_server_gpu": "PaddleOCR Server GPU",
-                "easyocr": "EasyOCR CPU",
-                "easyocr_gpu": "EasyOCR GPU (CUDA)",
-                "tesseract": "Tesseract CPU",
-            }[self.ocr_backend_value]
+            value=OCR_BACKEND_LABELS[self.ocr_backend_value]
         )
         self.keystroke_delay_var = tk.DoubleVar(value=self.keystroke_delay_ms)
         self.filter_enabled_var = tk.BooleanVar(value=self.green_filter.enabled)
@@ -386,17 +369,9 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
 
     def _change_ocr_backend(self, _event=None) -> None:
         selected = self.ocr_backend_var.get()
-        backend = {
-            "RapidOCR CPU": "rapidocr",
-            "RapidOCR GPU (CUDA)": "rapidocr_gpu",
-            "PaddleOCR CPU": "paddle_cpu",
-            "PaddleOCR GPU": "paddle",
-            "PaddleOCR Server CPU": "paddle_server_cpu",
-            "PaddleOCR Server GPU": "paddle_server_gpu",
-            "EasyOCR CPU": "easyocr",
-            "EasyOCR GPU (CUDA)": "easyocr_gpu",
-            "Tesseract CPU": "tesseract",
-        }.get(selected, "rapidocr")
+        backend = OCR_LABEL_BACKENDS.get(selected, self.ocr_backend_options[0])
+        if backend not in self.ocr_backend_options:
+            backend = self.ocr_backend_options[0]
         if backend == self.ocr_backend_value:
             return
         was_capturing = bool(self.worker.thread and self.worker.thread.is_alive())
@@ -619,6 +594,7 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         }
         temporary = self.state_path.with_suffix(".tmp")
         try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
             temporary.write_text(json.dumps(data, indent=2), encoding="utf-8")
             temporary.replace(self.state_path)
         except OSError:

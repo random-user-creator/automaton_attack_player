@@ -1,0 +1,8 @@
+Pillow>=11.0
+numpy>=1.26,<3
+opencv-python-headless>=4.10,<6
+dxcam>=0.3,<0.4
+mss>=10.2,<12
+paddleocr==3.7.0
+paddlepaddle==3.2.2
+pyinstaller==6.22.2

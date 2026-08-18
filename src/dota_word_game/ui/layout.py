@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from .constants import (
+    OCR_BACKEND_LABELS,
     REC_RESIZE_LABEL_METHODS,
     REC_RESIZE_METHOD_LABELS,
     RESIZE_LABEL_METHODS,
@@ -191,16 +192,9 @@ class UILayoutMixin:
             state="readonly",
             width=22,
             textvariable=self.ocr_backend_var,
-            values=(
-                "RapidOCR CPU",
-                "RapidOCR GPU (CUDA)",
-                "PaddleOCR CPU",
-                "PaddleOCR GPU",
-                "PaddleOCR Server CPU",
-                "PaddleOCR Server GPU",
-                "EasyOCR CPU",
-                "EasyOCR GPU (CUDA)",
-                "Tesseract CPU",
+            values=tuple(
+                OCR_BACKEND_LABELS[backend]
+                for backend in self.ocr_backend_options
             ),
         )
         backend_combo.grid(row=1, column=1, sticky="w", pady=(6, 0))
