@@ -17,6 +17,9 @@ class CaptureWorker:
         self.errors: queue.Queue[str] = queue.Queue(maxsize=1)
         self.stop_event = threading.Event()
         self.thread: threading.Thread | None = None
+        self.backend_name = "idle"
+        self.latest_grab_ms = 0.0
+        self.latest_total_ms = 0.0
 
     def start(
         self,
@@ -29,6 +32,7 @@ class CaptureWorker:
     ) -> None:
         self.stop()
         self.stop_event.clear()
+        self.backend_name = "starting"
         self.thread = threading.Thread(
             target=self._capture_loop,
             args=(
@@ -66,6 +70,7 @@ class CaptureWorker:
         ocr_submitter,
     ) -> None:
         capture_backend = FastScreenCapture(region)
+        self.backend_name = capture_backend.name
         timing_log("CAPTURE", "backend_ready", backend=capture_backend.name)
         frame_id = 0
         try:
@@ -109,6 +114,8 @@ class CaptureWorker:
                             pass
                     self.frames.put_nowait((frame_id, captured_at, frame))
                     completed_at = time.perf_counter()
+                    self.latest_grab_ms = native_grab_ms
+                    self.latest_total_ms = (completed_at - started) * 1000
                     fps = max(1, min(60, fps_provider()))
                     timing_log(
                         "CAPTURE",
@@ -120,7 +127,7 @@ class CaptureWorker:
                         scale_ms=f"{(scaled_at - scale_started) * 1000:.1f}",
                         filter_ms=f"{(filtered_at - scaled_at) * 1000:.1f}",
                         submit_ms=f"{(submitted_at - filtered_at) * 1000:.1f}",
-                        total_ms=f"{(completed_at - started) * 1000:.1f}",
+                        total_ms=f"{self.latest_total_ms:.1f}",
                         size=f"{frame.width}x{frame.height}",
                         resize_method=resize_method_provider(),
                         budget_ms=f"{1000 / fps:.1f}",

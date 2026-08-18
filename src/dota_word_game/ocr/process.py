@@ -49,6 +49,11 @@ PADDLE_BACKENDS = {
     },
 }
 
+# PaddleOCR defaults to ten inference threads. That oversubscribes this live
+# pipeline and competes with capture, filtering, the UI, and keyboard output.
+# Small word crops benchmark faster with two threads on the target machine.
+PADDLE_CPU_THREADS = 2
+
 
 def ocr_process_main(
     backend,
@@ -166,6 +171,9 @@ def ocr_process_main(
                 "model_name": recognizer_name,
                 "device": paddle_device,
             }
+            if not paddle_gpu:
+                detector_kwargs["cpu_threads"] = PADDLE_CPU_THREADS
+                recognizer_kwargs["cpu_threads"] = PADDLE_CPU_THREADS
             if detector_dir is not None:
                 detector_kwargs["model_dir"] = str(detector_dir)
             if recognizer_dir is not None:

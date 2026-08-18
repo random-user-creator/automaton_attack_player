@@ -94,7 +94,7 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         filter_state = saved.get("green_filter", {})
         self.green_filter = GreenFilter(
             enabled=bool(filter_state.get("enabled", True)),
-            keep_text_bands=bool(filter_state.get("keep_text_bands", True)),
+            keep_text_bands=bool(filter_state.get("keep_text_bands", False)),
             hue_min=max(0, min(359, int(filter_state.get("hue_min", 80)))),
             hue_max=max(0, min(359, int(filter_state.get("hue_max", 93)))),
             saturation_min=max(
@@ -165,6 +165,7 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         self.latest_blob_detection_size: tuple[int, int] = (0, 0)
         self.saved_window_geometry: str | None = None
         self.saved_window_state = "normal"
+        self.last_capture_status_refresh = 0.0
         self._closing = False
 
         self._build_ui()
@@ -389,6 +390,9 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
         height = max(1, round(self.region.height * self.scale_value / 100))
         self.status_var.set(
             f"Capturing at {self.fps_value} FPS • "
+            f"{self.worker.backend_name} • frame "
+            f"{self.worker.latest_total_ms:.0f} ms "
+            f"(grab {self.worker.latest_grab_ms:.0f} ms) • "
             f"processing {width} × {height}px ({self.scale_value}%, "
             f"{self.resize_method_value}) • REC crop "
             f"{self.recognition_scale_value}% "
@@ -483,6 +487,9 @@ class DotaWordGameApp(UILayoutMixin, tk.Tk):
                 render_ms=f"{(time.perf_counter() - render_started) * 1000:.1f}",
                 size=f"{frame.width}x{frame.height}",
             )
+            if render_started - self.last_capture_status_refresh >= 0.5:
+                self.last_capture_status_refresh = render_started
+                self._update_capture_status()
         self.after(15, self._display_latest_frame)
 
     def _poll_ocr(self) -> None:

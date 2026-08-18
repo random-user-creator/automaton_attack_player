@@ -9,7 +9,6 @@ import traceback
 from pathlib import Path
 
 from .platform.windows import enable_dpi_awareness
-from .ui.application import DotaWordGameApp
 
 
 def _packaged_self_test() -> None:
@@ -33,6 +32,8 @@ def _packaged_self_test() -> None:
 
 
 def main() -> None:
+    # Frozen Windows worker processes execute this entry point again. Divert
+    # them before importing Tkinter and the rest of the application graph.
     mp.freeze_support()
     if "--self-test" in sys.argv:
         try:
@@ -50,6 +51,8 @@ def main() -> None:
             )
             raise
         return
+    from .ui.application import DotaWordGameApp
+
     enable_dpi_awareness()
     app = DotaWordGameApp()
     signal.signal(signal.SIGINT, lambda _signal, _frame: app.after(0, app._on_close))

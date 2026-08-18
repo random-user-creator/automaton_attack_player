@@ -24,6 +24,11 @@ area are saved in
 warn that the executable is from an unknown publisher because the project does
 not currently have a commercial code-signing certificate.
 
+The capture status shows the active backend (`dxcam-buffered`, `mss`, or
+`pillow`) plus the latest total frame and screen-grab times. `dxcam-buffered`
+is the preferred low-latency path. PaddleOCR CPU is limited to two inference
+threads so OCR does not starve capture and UI work.
+
 ## Platform and requirements
 
 The application currently targets **64-bit Windows 10 or Windows 11**. DXcam,
@@ -292,7 +297,7 @@ further.
 | Setting | Range / default | Explanation |
 |---|---|---|
 | Show only green text | On | Enables HSV masking. Matching pixels become white and everything else becomes black in the preview. Turning it off also disables blob-based detector skipping. |
-| Clean text rows | On | Retains horizontal, letter-like bands while rejecting sparse or large solid scenery regions. Supports multiple rows when enabled. |
+| Clean text rows | Off | Retains horizontal, letter-like bands while rejecting sparse or large solid scenery regions. Enable it when scenery leaks through; leave it off if thin or vertically separated letters disappear. |
 | Hue range | 80–93° | Target green hue interval sampled from the reference game screenshot. |
 | Minimum saturation | 35% | Rejects gray or weakly colored pixels. Increase it when pale scenery is included; decrease it if letter edges vanish. |
 | Minimum brightness | 50% | Rejects dark green pixels. Increase it for dark background noise; decrease it if dim letters disappear. |
